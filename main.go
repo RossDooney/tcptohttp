@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -15,11 +16,10 @@ func main() {
 		return
 	}
 
-	//br := bufio.NewReader(data)
-
+	txtConent := ""
 	for {
 		b := make([]byte, 8)
-		_, err := data.Read(b)
+		n, err := data.Read(b)
 
 		if err != nil && !errors.Is(err, io.EOF) {
 			fmt.Println(err)
@@ -29,8 +29,16 @@ func main() {
 		if err != nil {
 			break
 		}
-		fmt.Printf("read: %v\n", string(b))
+		str := string(b[:n])
+		txtConent += str
+	}
 
+	stuff := strings.Split(txtConent, "\n")
+	for i := 0; i < len(stuff); i++ {
+		if stuff[i] == "" {
+			break
+		}
+		fmt.Printf("read: %v \n", stuff[i])
 	}
 
 }
