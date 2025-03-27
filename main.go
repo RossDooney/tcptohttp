@@ -4,23 +4,44 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
+	"net"
 	"strings"
 )
 
 func main() {
 
-	data, err := os.Open("./messages.txt")
+	listener, err := net.Listen("tcp", ":42069")
+
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
 	}
 
-	linesChan := getLinesChannel(data)
+	defer listener.Close()
 
-	for line := range linesChan {
-		fmt.Println("read:", line)
+	for {
+		conn, err := listener.Accept()
+
+		if err != nil {
+			fmt.Println("Error: ", err)
+			return
+		}
+
+		linesChan := getLinesChannel(conn)
+
+		for line := range linesChan {
+			fmt.Println("read:", line)
+		}
 	}
+}
+
+func handleConn(conn net.Conn) {
+	b := make([]byte, 1024)
+	conn.Read(b)
+
+	fmt.Print("", string(b))
+
+	defer conn.Close()
 }
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
@@ -30,7 +51,7 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 		defer close(lines)
 		currentLineContents := ""
 		for {
-			b := make([]byte, 8, 8)
+			b := make([]byte, 8)
 			n, err := f.Read(b)
 			if err != nil {
 				if currentLineContents != "" {
