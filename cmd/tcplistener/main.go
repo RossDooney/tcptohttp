@@ -35,15 +35,6 @@ func main() {
 	}
 }
 
-func handleConn(conn net.Conn) {
-	b := make([]byte, 1024)
-	conn.Read(b)
-
-	fmt.Print("", string(b))
-
-	defer conn.Close()
-}
-
 func getLinesChannel(f io.ReadCloser) <-chan string {
 	lines := make(chan string)
 	go func() {
