@@ -25,12 +25,24 @@ func main() {
 		return
 	}
 
+	reader := bufio.NewReader(os.Stdin)
+
 	for {
-		reader := bufio.NewReader(os.Stdin)
+
 		fmt.Print(">")
-		text, _ := reader.ReadString('\n')
-		byteTxt := []byte(text)
-		conn.Write(byteTxt)
+		text, err := reader.ReadString('\n')
+
+		if err != nil {
+			fmt.Println("Errors : ", nil)
+			os.Exit(1)
+		}
+
+		_, err = conn.Write([]byte(text))
+
+		if err != nil {
+			fmt.Println("Errors :", err)
+			os.Exit(1)
+		}
 	}
 	// for {
 	// 	conn, err := listener.Accept()
