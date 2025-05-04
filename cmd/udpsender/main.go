@@ -18,10 +18,15 @@ func main() {
 
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 
+	if err != nil {
+		fmt.Println("Errors: ", err)
+		return
+	}
+
 	defer conn.Close()
 
 	if err != nil {
-		fmt.Println("Errors :", err)
+		fmt.Println("Errors: ", err)
 		return
 	}
 
@@ -40,7 +45,7 @@ func main() {
 		_, err = conn.Write([]byte(text))
 
 		if err != nil {
-			fmt.Println("Errors :", err)
+			fmt.Println("Errors: ", err)
 			os.Exit(1)
 		}
 	}
