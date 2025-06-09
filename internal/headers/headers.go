@@ -16,25 +16,32 @@ const crlf = "\r\n"
 
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
-	n, err = parseRequestLine(data)
-	if err != nil {
-		return 0, false, err
-	}
-	if n == 0 {
-		// just need more data
-		return 0, false, nil
-	}
-	requestLineText := string(data[:n])
-	key, value, err := headerFromString(requestLineText)
+	done = false
+	bytesRead := 0
+	for !done {
+		n, err = parseRequestLine(data)
+		if err != nil {
+			return 0, false, err
+		}
+		if n == 0 {
+			done = true
+			break
+		}
+		requestLineText := string(data[:n])
+		key, value, err := headerFromString(requestLineText)
 
-	if err != nil {
-		// something actually went wrong
-		return 0, false, err
+		if err != nil {
+			return 0, false, err
+		}
+
+		h[key] = value
+		// n + 2 to include \r\n, another +2 at the end to include the last escape char
+		bytesRead += n + 2
+		data = data[n+2:]
+
 	}
 
-	h[key] = value
-
-	return n + 2, true, nil
+	return bytesRead, done, nil
 
 }
 
