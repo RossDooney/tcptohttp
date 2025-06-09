@@ -18,15 +18,23 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 	n, err = parseRequestLine(data)
 	if err != nil {
-		// something actually went wrong
 		return 0, false, err
 	}
 	if n == 0 {
 		// just need more data
 		return 0, false, nil
 	}
+	requestLineText := string(data[:n])
+	key, value, err := headerFromString(requestLineText)
 
-	return n, true, nil
+	if err != nil {
+		// something actually went wrong
+		return 0, false, err
+	}
+
+	h[key] = value
+
+	return n + 2, true, nil
 
 }
 
@@ -35,19 +43,48 @@ func parseRequestLine(data []byte) (int, error) {
 	if idx == -1 {
 		return 0, nil
 	}
-	requestLineText := string(data[:idx])
-	err := requestLineFromString(requestLineText)
-	if err != nil {
-		return 0, err
-	}
-	return idx + 2, nil
+	return idx, nil
 }
 
-func requestLineFromString(str string) error {
+func headerFromString(str string) (string, string, error) {
 	before, after, _ := strings.Cut(str, ":")
 
-	fmt.Println(before)
-	fmt.Println(after)
+	start := 0
+	for _, c := range before {
+		if c != ' ' && c != '\t' {
+			break
+		}
+		start++
+	}
 
-	return nil
+	key := before[start:]
+	for _, c := range key {
+		if c == ' ' || c == '\t' {
+			return "", "", fmt.Errorf("Whitespace present in header key")
+		}
+	}
+
+	start = 0
+	end := len(after) - 1
+
+	isASCIISpace := func(c byte) bool {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v' || c == '\f'
+	}
+
+	for start <= end && isASCIISpace(after[start]) {
+		start++
+	}
+	for end >= start && isASCIISpace(after[end]) {
+		end--
+	}
+
+	value := after[start : end+1]
+
+	for _, c := range value {
+		if c == ' ' || c == '\t' {
+			return "", "", fmt.Errorf("Whitespace present in header value")
+		}
+	}
+
+	return key, value, nil
 }
