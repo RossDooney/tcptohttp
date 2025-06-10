@@ -24,7 +24,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		// headers are done, consume the CRLF
 		return 2, true, nil
 	}
-
+	h.Set("host", "1234")
 	parts := bytes.SplitN(data[:idx], []byte(":"), 2)
 	key := string(parts[0])
 
@@ -40,7 +40,16 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	if err != nil {
 		return 0, false, fmt.Errorf("invalid characters in header: %s", key)
 	}
-	fmt.Println(key)
+	if val, exists := h[key]; exists {
+		var valueString strings.Builder
+
+		valueString.WriteString(val)
+		valueString.WriteString(",")
+		valueString.WriteString(string(value))
+		h.Set(key, valueString.String())
+		return idx + 2, false, nil
+	}
+
 	h.Set(key, string(value))
 	return idx + 2, false, nil
 }

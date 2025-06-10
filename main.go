@@ -33,10 +33,10 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 
 func main() {
 	headers := headers.NewHeaders()
-	data := []byte("  Host:        localhost:42069\r\n\r\n")
+	data := []byte("  Host:        l!ocal:HOst42069\r\n\r\n")
 	n, done, err := headers.Parse(data)
 
-	fmt.Println("Host: ", headers["Host"])
+	fmt.Println("Host: ", headers["host"])
 	fmt.Println("Number: ", n)
 	fmt.Println("Done?: ", done)
 	fmt.Println("Err?: ", err)
