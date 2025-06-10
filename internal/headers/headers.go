@@ -35,10 +35,45 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	value := bytes.TrimSpace(parts[1])
 	key = strings.TrimSpace(key)
 
+	key, err = normalizeHead(key)
+
+	if err != nil {
+		return 0, false, fmt.Errorf("invalid characters in header: %s", key)
+	}
+	fmt.Println(key)
 	h.Set(key, string(value))
 	return idx + 2, false, nil
 }
 
 func (h Headers) Set(key, value string) {
 	h[key] = value
+}
+
+func normalizeHead(data string) (string, error) {
+	allowedSpecialChars := "!#$%&'*+-.^_`|~"
+	dataBytes := []byte(data)
+	for i, c := range dataBytes {
+
+		if c >= 'a' && c <= 'z' {
+			continue
+		}
+
+		if c >= 'A' && c <= 'z' {
+			dataBytes[i] = c + 32
+			continue
+		}
+
+		if c >= '0' && c <= '9' {
+			continue
+		}
+
+		if strings.ContainsRune(allowedSpecialChars, rune(c)) {
+			continue
+		}
+		fmt.Println("incorrect char at ", i)
+		return data, fmt.Errorf("in correct character found: ")
+
+	}
+
+	return string(dataBytes), nil
 }
