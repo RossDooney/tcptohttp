@@ -66,11 +66,12 @@ func TestHeadersParse(t *testing.T) {
 	assert.False(t, done)
 
 	// Test: Key with multiple values
-	headers = map[string]string{"host": "localhost:42069"}
-	data = []byte("host: someotherhost:80\r\n\r\n")
+	headers = map[string]string{"host": "localhost:80"}
+	data = []byte("host: localhost:42069\r\n\r\n")
 	n, done, err = headers.Parse(data)
 	require.NoError(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:42069, someotherhost:80", headers["host"])
+	assert.Equal(t, "localhost:80, localhost:42069", headers["host"])
+	assert.Equal(t, 23, n)
 	assert.False(t, done)
 }
