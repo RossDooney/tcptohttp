@@ -20,7 +20,6 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, nil
 	}
 	if idx == 0 {
-		// the empty line
 		// headers are done, consume the CRLF
 		return 2, true, nil
 	}
@@ -48,7 +47,6 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		h.Set(key, valueString.String())
 		return idx + 2, false, nil
 	}
-
 	h.Set(key, string(value))
 	return idx + 2, false, nil
 }

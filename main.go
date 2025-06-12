@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"httpTest/internal/headers"
+	"httpTest/internal/request"
 	"io"
 )
 
@@ -32,12 +32,11 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 }
 
 func main() {
-	headers := headers.NewHeaders()
-	data := []byte("  Host:        l!ocal:HOst42069\r\n\r\n")
-	n, done, err := headers.Parse(data)
 
-	fmt.Println("Host: ", headers["host"])
-	fmt.Println("Number: ", n)
-	fmt.Println("Done?: ", done)
-	fmt.Println("Err?: ", err)
+	reader := &chunkReader{
+		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+	r, _ := request.RequestFromReader(reader)
+	fmt.Println("asd: ", r.Headers["accept"])
 }
