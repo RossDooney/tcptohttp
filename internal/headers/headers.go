@@ -55,6 +55,10 @@ func (h Headers) Set(key, value string) {
 	h[key] = value
 }
 
+func (h Headers) Get(key string) string {
+	return h[key]
+}
+
 func normalizeHead(data string) (string, error) {
 	allowedSpecialChars := "!#$%&'*+-.^_`|~"
 	dataBytes := []byte(data)
