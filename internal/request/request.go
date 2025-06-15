@@ -5,16 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"httpTest/internal/headers"
 )
 
 type Request struct {
-	RequestLine RequestLine
-	Headers     headers.Headers
-	Body        []byte
-	state       requestState
+	RequestLine    RequestLine
+	Headers        headers.Headers
+	Body           []byte
+	state          requestState
+	bodyLengthRead int
 }
 
 type RequestLine struct {
@@ -29,6 +31,7 @@ const (
 	requestStateInitialized requestState = iota
 	requestStateParsingHeaders
 	requestStateParsingBody
+	requestStateParsed
 	requestStateDone
 )
 
@@ -50,11 +53,20 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		}
 
 		numBytesRead, err := reader.Read(buf[readToIndex:])
+
+		if req.state == requestStateParsed && !errors.Is(err, io.EOF) {
+			// request state been set to parse but not reached end of file, this can happen if a partial content parse
+			// ends up equaling the content length. Place holder while think of better fix
+
+			return nil, fmt.Errorf("state fully parsed before end of file")
+		}
+
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				if req.state != requestStateDone {
+				if req.state != requestStateParsed {
 					return nil, fmt.Errorf("incomplete request, in state: %d, read n bytes on EOF: %d", req.state, numBytesRead)
 				}
+				req.state = requestStateDone
 				break
 			}
 			return nil, err
@@ -123,7 +135,7 @@ func requestLineFromString(str string) (*RequestLine, error) {
 
 func (r *Request) parse(data []byte) (int, error) {
 	totalBytesParsed := 0
-	for r.state != requestStateDone {
+	for r.state != requestStateParsed {
 		n, err := r.parseSingle(data[totalBytesParsed:])
 		if err != nil {
 			return 0, err
@@ -161,10 +173,30 @@ func (r *Request) parseSingle(data []byte) (int, error) {
 		}
 		return n, nil
 	case requestStateParsingBody:
+		contentLength, exists := r.Headers.Get("content-length")
+		if !exists {
+			r.state = requestStateDone
+			return 0, nil
+		}
 
-		r.state = requestStateDone
-		return 0, nil
-	case requestStateDone:
+		dataLen, err := strconv.Atoi(contentLength)
+		if err != nil {
+			return 0, fmt.Errorf("cannot convert content-length to int")
+		}
+
+		r.Body = append(r.Body, data...)
+		r.bodyLengthRead += len(data)
+
+		if dataLen < r.bodyLengthRead {
+			return 0, fmt.Errorf("body larger then content-length")
+		}
+
+		if dataLen == len(r.Body) {
+			r.state = requestStateParsed
+		}
+
+		return len(data), nil
+	case requestStateParsed:
 		return 0, fmt.Errorf("error: trying to read data in a done state")
 	default:
 		return 0, fmt.Errorf("unknown state")

@@ -55,8 +55,10 @@ func (h Headers) Set(key, value string) {
 	h[key] = value
 }
 
-func (h Headers) Get(key string) string {
-	return h[key]
+func (h Headers) Get(key string) (string, bool) {
+	key = strings.ToLower(key)
+	value, exists := h[key]
+	return value, exists
 }
 
 func normalizeHead(data string) (string, error) {

@@ -34,9 +34,18 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 func main() {
 
 	reader := &chunkReader{
-		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		data: "POST /submit HTTP/1.1\r\n" +
+			"Host: localhost:42069\r\n" +
+			"Content-Length: 6\r\n" +
+			"\r\n" +
+			"hello world!\n",
 		numBytesPerRead: 3,
 	}
-	r, _ := request.RequestFromReader(reader)
-	fmt.Println("asd: ", r.Headers["accept"])
+	r, err := request.RequestFromReader(reader)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(r.RequestLine.Method)
+
 }
