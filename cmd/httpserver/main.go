@@ -9,7 +9,7 @@ import (
 )
 
 type Server struct {
-	Port int
+	Listener net.Listener
 }
 
 const port = 42069
@@ -29,10 +29,15 @@ func main() {
 }
 
 func Serve(port int) (*Server, error) {
-	s := &Server{
-		Port: port,
+
+	listener, err := net.Listen("tcp", ":"+string(port))
+	if err != nil {
+		return nil, err
 	}
 
+	s := &Server{
+		Listener: listener,
+	}
 	return s, nil
 }
 
