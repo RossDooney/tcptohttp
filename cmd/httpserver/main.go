@@ -1,16 +1,12 @@
-package server
+package main
 
 import (
+	"httpTest/internal/server"
 	"log"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 )
-
-type Server struct {
-	Listener net.Listener
-}
 
 const port = 42069
 
@@ -26,29 +22,4 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 	log.Println("Server gracefully stopped")
-}
-
-func Serve(port int) (*Server, error) {
-
-	listener, err := net.Listen("tcp", ":"+string(port))
-	if err != nil {
-		return nil, err
-	}
-
-	s := &Server{
-		Listener: listener,
-	}
-	return s, nil
-}
-
-func (s *Server) Close() error {
-
-}
-
-func (s *Server) listen() {
-
-}
-
-func (s *Server) handle(conn net.Conn) {
-
 }
