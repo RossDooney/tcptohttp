@@ -29,7 +29,11 @@ func WriteStatusLine(w io.Writer, statusCode ServerStatusCode) error {
 	}
 
 	statusLine := fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, status)
-	w.Write([]byte(statusLine))
+	_, err := w.Write([]byte(statusLine))
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -50,10 +54,16 @@ func WriteHeaders(w io.Writer, headers headers.Headers) error {
 
 	for key, value := range headers {
 		headerTxt = fmt.Sprintf("%s: %s\r\n", key, value)
-		w.Write([]byte(headerTxt))
+		_, err := w.Write([]byte(headerTxt))
+		if err != nil {
+			return err
+		}
 	}
 
-	w.Write([]byte("\r\n"))
+	_, err := w.Write([]byte("\r\n"))
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
