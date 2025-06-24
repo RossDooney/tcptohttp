@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
 	"httpTest/internal/response"
 	"log"
@@ -50,17 +49,17 @@ func (s *Server) listen() {
 
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
-	buf := new(bytes.Buffer)
-	err := response.WriteStatusLine(buf, 200)
+	err := response.WriteStatusLine(conn, 200)
 
 	if err != nil {
 		return
 	}
 
-	h := response.GetDefaultHeaders(0)
+	headers := response.GetDefaultHeaders(0)
+	err = response.WriteHeaders(conn, headers)
 
-	response.WriteHeaders(buf, h)
-
-	conn.Write(buf.Bytes())
+	if err != nil {
+		return
+	}
 
 }
