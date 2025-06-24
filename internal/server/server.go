@@ -1,13 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"fmt"
+	"httpTest/internal/response"
 	"log"
 	"net"
 	"sync/atomic"
 )
 
-// Server is an HTTP 1.1 server
 type Server struct {
 	listener net.Listener
 	state    atomic.Bool
@@ -49,11 +50,17 @@ func (s *Server) listen() {
 
 func (s *Server) handle(conn net.Conn) {
 	defer conn.Close()
-	response := "HTTP/1.1 200 OK\r\n" +
-		"Content-Type: text/plain\r\n" +
-		"Content-Length: 13\r\n" +
-		"\r\n" +
-		"Hello World!\n" // Body
-	conn.Write([]byte(response))
+	buf := new(bytes.Buffer)
+	err := response.WriteStatusLine(buf, 200)
+
+	if err != nil {
+		return
+	}
+
+	h := response.GetDefaultHeaders(0)
+
+	response.WriteHeaders(buf, h)
+
+	conn.Write(buf.Bytes())
 
 }

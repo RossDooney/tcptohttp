@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"httpTest/internal/request"
+	"httpTest/internal/response"
 	"io"
 )
 
@@ -33,19 +34,17 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 
 func main() {
 
-	reader := &chunkReader{
-		data: "POST /submit HTTP/1.1\r\n" +
-			"Host: localhost:42069\r\n" +
-			"Content-Length: 6\r\n" +
-			"\r\n" +
-			"hello world!\n",
-		numBytesPerRead: 3,
-	}
-	r, err := request.RequestFromReader(reader)
+	buf := new(bytes.Buffer)
+	err := response.WriteStatusLine(buf, 200)
+
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-	fmt.Println(r.RequestLine.Method)
+
+	h := response.GetDefaultHeaders(0)
+
+	response.WriteHeaders(buf, h)
+
+	fmt.Println(buf.String())
 
 }

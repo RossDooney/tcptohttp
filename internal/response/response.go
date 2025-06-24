@@ -1,8 +1,10 @@
 package response
 
 import (
+	"fmt"
 	"httpTest/internal/headers"
 	"io"
+	"strconv"
 )
 
 type ServerStatusCode int
@@ -13,18 +15,45 @@ const (
 	StatusServerError ServerStatusCode = 500
 )
 
-var statusCode = map[ServerStatusCode]string{
+var statusText = map[ServerStatusCode]string{
 	StatusOK:          "Ok",
 	StatusBadRequest:  "Bad Request",
 	StatusServerError: "Internal Server Error",
 }
 
 func WriteStatusLine(w io.Writer, statusCode ServerStatusCode) error {
+	status, ok := statusText[statusCode]
+
+	if !ok {
+		status = ""
+	}
+
+	statusLine := fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, status)
+	w.Write([]byte(statusLine))
 
 	return nil
 }
 
+func GetDefaultHeaders(contentLen int) headers.Headers {
+	h := headers.NewHeaders()
+
+	h.Set("Content-Length", strconv.Itoa(contentLen))
+	h.Set("Connection", "close")
+	h.Set("Content-Type", "text/plain")
+
+	return h
+}
+
 func WriteHeaders(w io.Writer, headers headers.Headers) error {
+
+	var headerTxt string
+
+	for key, value := range headers {
+		headerTxt = fmt.Sprintf("%s: %s\r\n", key, value)
+		w.Write([]byte(headerTxt))
+	}
+
+	w.Write([]byte("\r\n"))
 
 	return nil
 }
