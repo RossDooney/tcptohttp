@@ -55,8 +55,6 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		numBytesRead, err := reader.Read(buf[readToIndex:])
 
 		if req.state == requestStateParsed && !errors.Is(err, io.EOF) {
-			// request state been set to parse but not reached end of file, this can happen if a partial content parse
-			// ends up equaling the content length. Place holder while think of better fix
 
 			return nil, fmt.Errorf("state fully parsed before end of file")
 		}

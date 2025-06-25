@@ -2,23 +2,24 @@ package server
 
 import (
 	"fmt"
-	"httpTest/internal/response"
 	"log"
 	"net"
 	"sync/atomic"
 )
 
 type Server struct {
+	handler  Handler
 	listener net.Listener
 	state    atomic.Bool
 }
 
-func Serve(port int) (*Server, error) {
+func Serve(port int, h Handler) (*Server, error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, err
 	}
 	s := &Server{
+		handler:  h,
 		listener: listener,
 	}
 	go s.listen()
@@ -45,21 +46,4 @@ func (s *Server) listen() {
 		}
 		go s.handle(conn)
 	}
-}
-
-func (s *Server) handle(conn net.Conn) {
-	defer conn.Close()
-	err := response.WriteStatusLine(conn, 200)
-
-	if err != nil {
-		return
-	}
-
-	headers := response.GetDefaultHeaders(0)
-	err = response.WriteHeaders(conn, headers)
-
-	if err != nil {
-		return
-	}
-
 }
