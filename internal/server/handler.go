@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"fmt"
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"io"
@@ -10,21 +9,17 @@ import (
 )
 
 type HandlerError struct {
-	StatusCode int
+	StatusCode response.ServerStatusCode
 	StatusMsg  string
 }
 
 type Handler func(w io.Writer, req *request.Request) *HandlerError
 
-func (handleErr HandlerError) Write(w io.Writer, body []byte) {
-	errMsg := fmt.Sprintf("HTTP/1.1 %d %s\r\n", handleErr.StatusCode, handleErr.StatusMsg)
-	w.Write([]byte(errMsg))
+func (handleErr HandlerError) Write(w io.Writer) {
+	response.WriteStatusLine(w, handleErr.StatusCode)
+	body := []byte(handleErr.StatusMsg)
 	headers := response.GetDefaultHeaders(len(body))
-	err := response.WriteHeaders(w, headers)
-	if err != nil {
-		return
-	}
-
+	response.WriteHeaders(w, headers)
 	w.Write(body)
 }
 
@@ -38,18 +33,17 @@ func (s *Server) handle(conn net.Conn) {
 			StatusCode: 400,
 			StatusMsg:  err.Error(),
 		}
-		handleErr.Write(conn, nil)
+		handleErr.Write(conn)
 		return
 	}
 
 	buffer := bytes.NewBuffer([]byte{})
 	handleErr := s.handler(buffer, req)
-	body := buffer.Bytes()
 	if handleErr != nil {
-		handleErr.Write(conn, body)
+		handleErr.Write(conn)
 		return
 	}
-
+	body := buffer.Bytes()
 	err = response.WriteStatusLine(conn, 200)
 	if err != nil {
 		return

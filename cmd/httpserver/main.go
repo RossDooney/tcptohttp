@@ -31,14 +31,12 @@ func ResponseHandler(w io.Writer, req *request.Request) *server.HandlerError {
 
 	if req.RequestLine.RequestTarget == "/yourproblem" {
 		hErr.StatusCode = 400
-		hErr.StatusMsg = "Bad Request"
-		w.Write([]byte("Your problem is not my problem\n"))
+		hErr.StatusMsg = "Your problem is not my problem\n"
 		return hErr
 	}
 	if req.RequestLine.RequestTarget == "/myproblem" {
 		hErr.StatusCode = 500
-		hErr.StatusMsg = "Internal Server Error"
-		w.Write([]byte("Woopsie, my bad\n"))
+		hErr.StatusMsg = "Woopsie, my bad\n"
 		return hErr
 	}
 
