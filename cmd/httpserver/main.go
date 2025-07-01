@@ -2,8 +2,8 @@ package main
 
 import (
 	"httpTest/internal/request"
+	"httpTest/internal/response"
 	"httpTest/internal/server"
-	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -26,20 +26,20 @@ func main() {
 	log.Println("Server gracefully stopped")
 }
 
-func ResponseHandler(w io.Writer, req *request.Request) *server.HandlerError {
+func ResponseHandler(w *response.Writer, req *request.Request) {
 	hErr := &server.HandlerError{}
 
 	if req.RequestLine.RequestTarget == "/yourproblem" {
 		hErr.StatusCode = 400
 		hErr.StatusMsg = "Your problem is not my problem\n"
-		return hErr
+		return
 	}
 	if req.RequestLine.RequestTarget == "/myproblem" {
 		hErr.StatusCode = 500
 		hErr.StatusMsg = "Woopsie, my bad\n"
-		return hErr
+		return
 	}
 
 	w.Write([]byte("All good, frfr\n"))
-	return nil
+
 }

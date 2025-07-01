@@ -1,9 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"httpTest/internal/response"
 	"io"
 )
 
@@ -33,18 +30,6 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 }
 
 func main() {
-
-	buf := new(bytes.Buffer)
-	err := response.WriteStatusLine(buf, 200)
-
-	if err != nil {
-		return
-	}
-
-	h := response.GetDefaultHeaders(0)
-
-	response.WriteHeaders(buf, h)
-
-	fmt.Println(buf.String())
+	return
 
 }

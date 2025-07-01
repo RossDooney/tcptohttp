@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"httpTest/internal/request"
 	"httpTest/internal/response"
-	"io"
 	"net"
 )
 
@@ -13,13 +12,13 @@ type HandlerError struct {
 	StatusMsg  string
 }
 
-type Handler func(w io.Writer, req *request.Request) *HandlerError
+type Handler func(w *response.Writer, req *request.Request)
 
-func (handleErr HandlerError) Write(w io.Writer) {
-	response.WriteStatusLine(w, handleErr.StatusCode)
+func (handleErr HandlerError) Write(w *response.Writer) {
+	w.WriteStatusLine(handleErr.StatusCode)
 	body := []byte(handleErr.StatusMsg)
 	headers := response.GetDefaultHeaders(len(body))
-	response.WriteHeaders(w, headers)
+	w.WriteHeaders(headers)
 	w.Write(body)
 }
 
@@ -28,29 +27,30 @@ func (s *Server) handle(conn net.Conn) {
 
 	req, err := request.RequestFromReader(conn)
 
+	w := &response.Writer{
+		Writer: conn,
+	}
+
 	if err != nil {
 		handleErr := &HandlerError{
 			StatusCode: 400,
 			StatusMsg:  err.Error(),
 		}
-		handleErr.Write(conn)
+		handleErr.Write(w)
 		return
 	}
 
 	buffer := bytes.NewBuffer([]byte{})
-	handleErr := s.handler(buffer, req)
-	if handleErr != nil {
-		handleErr.Write(conn)
-		return
-	}
+	s.handler(w, req)
+
 	body := buffer.Bytes()
-	err = response.WriteStatusLine(conn, 200)
+	err = w.WriteStatusLine(210)
 	if err != nil {
 		return
 	}
 
 	headers := response.GetDefaultHeaders(len(body))
-	err = response.WriteHeaders(conn, headers)
+	err = w.WriteHeaders(headers)
 	if err != nil {
 		return
 	}

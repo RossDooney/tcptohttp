@@ -21,7 +21,15 @@ var statusText = map[ServerStatusCode]string{
 	StatusServerError: "Internal Server Error",
 }
 
-func WriteStatusLine(w io.Writer, statusCode ServerStatusCode) error {
+type Writer struct {
+	Writer io.Writer
+}
+
+func (w *Writer) Write(p []byte) (n int, err error) {
+	return w.Writer.Write(p)
+}
+
+func (w *Writer) WriteStatusLine(statusCode ServerStatusCode) error {
 	status, ok := statusText[statusCode]
 
 	if !ok {
@@ -48,7 +56,7 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 	return h
 }
 
-func WriteHeaders(w io.Writer, headers headers.Headers) error {
+func (w *Writer) WriteHeaders(headers headers.Headers) error {
 
 	var headerTxt string
 
@@ -66,4 +74,9 @@ func WriteHeaders(w io.Writer, headers headers.Headers) error {
 	}
 
 	return nil
+}
+
+func (w *Writer) WriteBody(p []byte) (int, error) {
+	w.Write(p)
+	return 0, nil
 }
