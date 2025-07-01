@@ -27,19 +27,23 @@ func main() {
 }
 
 func ResponseHandler(w *response.Writer, req *request.Request) {
-	hErr := &server.HandlerError{}
+	hRsp := &server.HandlerResponse{}
 
 	if req.RequestLine.RequestTarget == "/yourproblem" {
-		hErr.StatusCode = 400
-		hErr.StatusMsg = "Your problem is not my problem\n"
+		hRsp.StatusCode = 400
+		hRsp.StatusMsg = "Your problem is not my problem\n"
+		hRsp.Write(w)
 		return
 	}
 	if req.RequestLine.RequestTarget == "/myproblem" {
-		hErr.StatusCode = 500
-		hErr.StatusMsg = "Woopsie, my bad\n"
+		hRsp.StatusCode = 500
+		hRsp.StatusMsg = "Woopsie, my bad\n"
+		hRsp.Write(w)
 		return
 	}
 
-	w.Write([]byte("All good, frfr\n"))
+	hRsp.StatusCode = 200
+	hRsp.StatusMsg = "All good, frfr\n"
+	hRsp.Write(w)
 
 }

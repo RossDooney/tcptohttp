@@ -1,22 +1,21 @@
 package server
 
 import (
-	"bytes"
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"net"
 )
 
-type HandlerError struct {
+type HandlerResponse struct {
 	StatusCode response.ServerStatusCode
 	StatusMsg  string
 }
 
 type Handler func(w *response.Writer, req *request.Request)
 
-func (handleErr HandlerError) Write(w *response.Writer) {
-	w.WriteStatusLine(handleErr.StatusCode)
-	body := []byte(handleErr.StatusMsg)
+func (handleRsp HandlerResponse) Write(w *response.Writer) {
+	w.WriteStatusLine(handleRsp.StatusCode)
+	body := []byte(handleRsp.StatusMsg)
 	headers := response.GetDefaultHeaders(len(body))
 	w.WriteHeaders(headers)
 	w.Write(body)
@@ -32,28 +31,13 @@ func (s *Server) handle(conn net.Conn) {
 	}
 
 	if err != nil {
-		handleErr := &HandlerError{
+		handleRsp := &HandlerResponse{
 			StatusCode: 400,
 			StatusMsg:  err.Error(),
 		}
-		handleErr.Write(w)
+		handleRsp.Write(w)
 		return
 	}
 
-	buffer := bytes.NewBuffer([]byte{})
 	s.handler(w, req)
-
-	body := buffer.Bytes()
-	err = w.WriteStatusLine(210)
-	if err != nil {
-		return
-	}
-
-	headers := response.GetDefaultHeaders(len(body))
-	err = w.WriteHeaders(headers)
-	if err != nil {
-		return
-	}
-
-	conn.Write(body)
 }
