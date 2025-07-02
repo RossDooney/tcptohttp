@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"httpTest/internal/server"
@@ -27,23 +28,53 @@ func main() {
 }
 
 func ResponseHandler(w *response.Writer, req *request.Request) {
-	hRsp := &server.HandlerResponse{}
 
 	if req.RequestLine.RequestTarget == "/yourproblem" {
-		hRsp.StatusCode = 400
-		hRsp.StatusMsg = "Your problem is not my problem\n"
-		hRsp.Write(w)
+
+		err := w.WriteStatusLine(400)
+		if err != nil {
+			fmt.Println()
+		}
+
+		body := []byte("Your problem is not my problem\n")
+		headers := response.GetDefaultHeaders(len(body))
+		headers.Set("Content-Type", "text/html")
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println()
+		}
+		w.Write(body)
 		return
 	}
 	if req.RequestLine.RequestTarget == "/myproblem" {
-		hRsp.StatusCode = 500
-		hRsp.StatusMsg = "Woopsie, my bad\n"
-		hRsp.Write(w)
+		err := w.WriteStatusLine(500)
+		if err != nil {
+			fmt.Println()
+		}
+
+		body := []byte("Woopsie, my bad\nn")
+		headers := response.GetDefaultHeaders(len(body))
+		headers.Set("Content-Type", "text/html")
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println()
+		}
+		w.Write(body)
 		return
 	}
 
-	hRsp.StatusCode = 200
-	hRsp.StatusMsg = "All good, frfr\n"
-	hRsp.Write(w)
+	err := w.WriteStatusLine(200)
+	if err != nil {
+		fmt.Println()
+	}
+
+	body := []byte("All good, frfr\n")
+	headers := response.GetDefaultHeaders(len(body))
+	headers.Set("Content-Type", "text/html")
+	err = w.WriteHeaders(headers)
+	if err != nil {
+		fmt.Println()
+	}
+	w.Write(body)
 
 }
