@@ -29,6 +29,25 @@ func main() {
 
 func ResponseHandler(w *response.Writer, req *request.Request) {
 
+	if req.RequestLine.RequestTarget == "/httpbin/stream/100" {
+		err := w.WriteStatusLine(200)
+		if err != nil {
+			fmt.Println()
+		}
+		body := []byte(`Test`)
+		headers := response.GetDefaultHeaders(len(body))
+		delete(headers, "Content-Length")
+		headers.Set("Transfer-Encoding", "chunked")
+		headers.Set("Content-Type", "text/html")
+		err = w.WriteHeaders(headers)
+		if err != nil {
+			fmt.Println()
+		}
+		w.Write(body)
+		return
+
+	}
+
 	if req.RequestLine.RequestTarget == "/yourproblem" {
 
 		err := w.WriteStatusLine(400)
