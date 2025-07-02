@@ -36,7 +36,15 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 			fmt.Println()
 		}
 
-		body := []byte("Your problem is not my problem\n")
+		body := []byte(`<html>
+  <head>
+    <title>400 Bad Request</title>
+  </head>
+  <body>
+    <h1>Bad Request</h1>
+    <p>Your request honestly kinda sucked.</p>
+  </body>
+</html>`)
 		headers := response.GetDefaultHeaders(len(body))
 		headers.Set("Content-Type", "text/html")
 		err = w.WriteHeaders(headers)
@@ -52,7 +60,15 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 			fmt.Println()
 		}
 
-		body := []byte("Woopsie, my bad\nn")
+		body := []byte(`<html>
+<head>
+	<title>500 Internal Server Error</title>
+</head>
+<body>
+	<h1>Internal Server Error</h1>
+	<p>Okay, you know what? This one is on me.</p>
+</body>
+</html>`)
 		headers := response.GetDefaultHeaders(len(body))
 		headers.Set("Content-Type", "text/html")
 		err = w.WriteHeaders(headers)
@@ -68,7 +84,15 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		fmt.Println()
 	}
 
-	body := []byte("All good, frfr\n")
+	body := []byte(`<html>
+<head>
+	<title>200 OK</title>
+</head>
+<body>
+	<h1>Success!</h1>
+	<p>Your request was an absolute banger.</p>
+</body>
+</html>`)
 	headers := response.GetDefaultHeaders(len(body))
 	headers.Set("Content-Type", "text/html")
 	err = w.WriteHeaders(headers)
