@@ -5,9 +5,12 @@ import (
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"httpTest/internal/server"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 )
 
@@ -29,12 +32,29 @@ func main() {
 
 func ResponseHandler(w *response.Writer, req *request.Request) {
 
-	if req.RequestLine.RequestTarget == "/httpbin/stream/100" {
-		err := w.WriteStatusLine(200)
+	if strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin/") {
+
+		url := "https://httpbin.org/" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin/")
+
+		fmt.Println(url)
+
+		res, err := http.Get(url)
+		if err != nil {
+			log.Fatal(err)
+		}
+		body, err := io.ReadAll(res.Body)
+		res.Body.Close()
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// fmt.Printf("%s", body)
+
+		err = w.WriteStatusLine(200)
 		if err != nil {
 			fmt.Println()
 		}
-		body := []byte(`Test`)
 		headers := response.GetDefaultHeaders(len(body))
 		delete(headers, "Content-Length")
 		headers.Set("Transfer-Encoding", "chunked")
