@@ -5,7 +5,6 @@ import (
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"httpTest/internal/server"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -42,7 +41,11 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		body, err := io.ReadAll(res.Body)
+		buf := make([]byte, 32)
+		i, err := res.Body.Read(buf)
+
+		fmt.Println("number of bytes ", i)
+		fmt.Println("What was read: ", buf)
 		res.Body.Close()
 
 		if err != nil {
@@ -55,7 +58,7 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		if err != nil {
 			fmt.Println()
 		}
-		headers := response.GetDefaultHeaders(len(body))
+		headers := response.GetDefaultHeaders(len(buf))
 		delete(headers, "Content-Length")
 		headers.Set("Transfer-Encoding", "chunked")
 		headers.Set("Content-Type", "text/html")
@@ -63,7 +66,7 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		if err != nil {
 			fmt.Println()
 		}
-		w.Write(body)
+		w.Write(buf)
 		return
 
 	}
