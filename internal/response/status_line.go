@@ -18,14 +18,12 @@ var statusText = map[ServerStatusCode]string{
 
 func (rs responseState) String() string {
 	switch rs {
-	case responseInitialized:
-		return "responseInitialized"
-	case responseStateWritingStatusLine:
-		return "responseStateWritingStatusLine"
-	case responseStateWritingHeaders:
-		return "responseStateWritingHeaders"
-	case responseStateWritingBody:
-		return "responseStateWritingBody"
+	case respWritingStatusLine:
+		return "respWritingStatusLine"
+	case respWritingHeaders:
+		return "respWritingHeaders"
+	case respWritingBody:
+		return "respWritingBody"
 	case responseStateDone:
 		return "responseStateDone"
 	default:
@@ -36,11 +34,9 @@ func (rs responseState) String() string {
 func (w *Writer) WriteStatusLine(statusCode ServerStatusCode) error {
 	status, ok := statusText[statusCode]
 
-	if w.state != responseInitialized {
-		return fmt.Errorf("error: trying to write status line after with responseInitialized not set, state set to: %s", w.state)
+	if w.State != respWritingStatusLine {
+		return fmt.Errorf("error: trying to write status line after with responseInitialized not set, state set to: %s", w.State)
 	}
-
-	w.state = responseStateWritingStatusLine
 
 	if !ok {
 		status = ""
@@ -52,6 +48,6 @@ func (w *Writer) WriteStatusLine(statusCode ServerStatusCode) error {
 	if err != nil {
 		return err
 	}
-
+	w.State = respWritingHeaders
 	return nil
 }

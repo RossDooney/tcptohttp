@@ -5,6 +5,7 @@ import (
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"httpTest/internal/server"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -32,41 +33,7 @@ func main() {
 func ResponseHandler(w *response.Writer, req *request.Request) {
 
 	if strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin/") {
-
-		url := "https://httpbin.org/" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin/")
-
-		fmt.Println(url)
-
-		res, err := http.Get(url)
-		if err != nil {
-			log.Fatal(err)
-		}
-		buf := make([]byte, 32)
-		i, err := res.Body.Read(buf)
-
-		fmt.Println("number of bytes ", i)
-		fmt.Println("What was read: ", buf)
-		res.Body.Close()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// fmt.Printf("%s", body)
-
-		err = w.WriteStatusLine(200)
-		if err != nil {
-			fmt.Println()
-		}
-		headers := response.GetDefaultHeaders(len(buf))
-		delete(headers, "Content-Length")
-		headers.Set("Transfer-Encoding", "chunked")
-		headers.Set("Content-Type", "text/html")
-		err = w.WriteHeaders(headers)
-		if err != nil {
-			fmt.Println()
-		}
-		w.Write(buf)
+		proxyHandler(w, req)
 		return
 
 	}
@@ -143,4 +110,44 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 	}
 	w.Write(body)
 
+}
+
+func proxyHandler(w *response.Writer, req *request.Request) {
+	url := "https://httpbin.org/" + strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin/")
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("error getting URL")
+		return
+	}
+	defer resp.Body.Close()
+
+	w.WriteStatusLine(200)
+	h := response.GetDefaultHeaders(0)
+	h.Set("Transfer-Encoding", "chunked")
+	delete(h, "Content-Length")
+	delete(h, "Connection")
+	w.WriteHeaders(h)
+
+	buf := make([]byte, 1024)
+	for {
+		i, err := resp.Body.Read(buf)
+		if i > 0 {
+			_, err = w.WriteChunkedBody(buf[:i])
+			if err != nil {
+				fmt.Println("Error writing chunked body:", err)
+				break
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			break
+		}
+	}
+	_, err = w.WriteChunkedBodyDone()
+	if err != nil {
+		fmt.Println("Error writing chunked body done:", err)
+	}
 }

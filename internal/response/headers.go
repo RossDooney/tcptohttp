@@ -18,11 +18,9 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 
 func (w *Writer) WriteHeaders(headers headers.Headers) error {
 
-	if w.state != responseStateWritingStatusLine {
-		return fmt.Errorf("error: trying to write status line after with responseStateWritingStatusLine not set, state set to: %s", w.state)
+	if w.State != respWritingHeaders {
+		return fmt.Errorf("error: trying to write status line after with responseStateWritingStatusLine not set, state set to: %s", w.State)
 	}
-
-	w.state = responseStateWritingHeaders
 
 	var headerTxt string
 
@@ -39,5 +37,6 @@ func (w *Writer) WriteHeaders(headers headers.Headers) error {
 		return err
 	}
 
+	w.State = respWritingBody
 	return nil
 }

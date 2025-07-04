@@ -7,16 +7,15 @@ import (
 
 type Writer struct {
 	Writer io.Writer
-	state  responseState
+	State  responseState
 }
 
 type responseState int
 
 const (
-	responseInitialized responseState = iota
-	responseStateWritingStatusLine
-	responseStateWritingHeaders
-	responseStateWritingBody
+	respWritingStatusLine responseState = iota
+	respWritingHeaders
+	respWritingBody
 	responseStateDone
 )
 
@@ -26,18 +25,48 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 
 func (w *Writer) WriteBody(p []byte) (int, error) {
 
-	if w.state != responseStateWritingHeaders {
-		return 0, fmt.Errorf("error: trying to write status line after with responseStateWritingHeaders not set, state set to: %s", w.state)
+	if w.State != respWritingBody {
+		return 0, fmt.Errorf("error: trying to write status line after with respWritingBody not set, state set to: %s", w.State)
 	}
-
-	w.state = responseStateWritingBody
 
 	return w.Write(p)
 }
-
 func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
-	return 0, nil
+	if w.State != respWritingBody {
+		return 0, fmt.Errorf("error: trying to write status line after with respWritingBody not set, state set to: %s", w.State)
+	}
+	chunkSize := len(p)
+
+	total := 0
+
+	i, err := fmt.Fprintf(w, "%x\r\n", chunkSize)
+	if err != nil {
+		return total, err
+	}
+	total += i
+
+	i, err = w.Write(p)
+	if err != nil {
+		return total, err
+	}
+	total += i
+
+	i, err = w.Write([]byte("\r\n"))
+	if err != nil {
+		return total, err
+	}
+	total += i
+	return total, nil
 }
+
 func (w *Writer) WriteChunkedBodyDone() (int, error) {
-	return 0, nil
+	if w.State != respWritingBody {
+		return 0, fmt.Errorf("error: trying to write status line after with respWritingBody not set, state set to: %s", w.State)
+	}
+	i, err := w.Write([]byte("0\r\n\r\n"))
+	if err != nil {
+		return i, err
+	}
+	w.State = responseStateDone
+	return i, nil
 }
