@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"httpTest/internal/headers"
 	"httpTest/internal/request"
 	"httpTest/internal/response"
 	"httpTest/internal/server"
@@ -10,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -52,7 +56,7 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 func handler200(w *response.Writer) {
 	err := w.WriteStatusLine(200)
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 	}
 
 	body := []byte(`<html>
@@ -68,7 +72,7 @@ func handler200(w *response.Writer) {
 	headers.Set("Content-Type", "text/html")
 	err = w.WriteHeaders(headers)
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 	}
 	w.Write(body)
 }
@@ -77,7 +81,7 @@ func handler400(w *response.Writer) {
 
 	err := w.WriteStatusLine(400)
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 	}
 
 	body := []byte(`<html>
@@ -90,10 +94,10 @@ func handler400(w *response.Writer) {
   </body>
 </html>`)
 	headers := response.GetDefaultHeaders(len(body))
-	headers.Set("Content-Type", "text/html")
+	headers.Override("Content-Type", "text/html")
 	err = w.WriteHeaders(headers)
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 	}
 	w.Write(body)
 }
@@ -101,7 +105,7 @@ func handler400(w *response.Writer) {
 func handler500(w *response.Writer) {
 	err := w.WriteStatusLine(500)
 	if err != nil {
-		fmt.Println()
+		fmt.Println(err)
 	}
 
 	body := []byte(`<html>
@@ -134,15 +138,20 @@ func proxyHandler(w *response.Writer, req *request.Request) {
 	w.WriteStatusLine(200)
 	h := response.GetDefaultHeaders(0)
 	h.Set("Transfer-Encoding", "chunked")
-	delete(h, "Content-Length")
-	delete(h, "Connection")
+	h.Set("Trailers", "X-Content-SHA256 X-Content-Length")
+	h.Remove("Content-Length")
+
 	w.WriteHeaders(h)
 
+	bodySize := 0
+	var fullBody []byte
 	buf := make([]byte, 1024)
 	for {
 		i, err := resp.Body.Read(buf)
+		bodySize += i
 		if i > 0 {
 			_, err = w.WriteChunkedBody(buf[:i])
+			fullBody = append(fullBody, buf[:i]...)
 			if err != nil {
 				fmt.Println("Error writing chunked body:", err)
 				break
@@ -160,4 +169,15 @@ func proxyHandler(w *response.Writer, req *request.Request) {
 	if err != nil {
 		fmt.Println("Error writing chunked body done:", err)
 	}
+
+	trailer := headers.NewHeaders()
+
+	sum := sha256.Sum256(fullBody)
+	strSum := hex.EncodeToString(sum[:])
+
+	trailer.Set("X-Content-SHA256", strSum)
+	trailer.Set("X-Content-Length", strconv.Itoa(bodySize))
+
+	w.WriteTrailers(trailer)
+
 }
