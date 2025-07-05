@@ -49,6 +49,10 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		handler500(w)
 		return
 	}
+	if req.RequestLine.RequestTarget == "/video" {
+		videoHandler(w)
+		return
+	}
 
 	handler200(w)
 }
@@ -179,5 +183,24 @@ func proxyHandler(w *response.Writer, req *request.Request) {
 	trailer.Set("X-Content-Length", strconv.Itoa(bodySize))
 
 	w.WriteTrailers(trailer)
+
+}
+
+func videoHandler(w *response.Writer) {
+
+	data, err := os.ReadFile("assets/vim.mp4")
+	if err != nil {
+		fmt.Println(err)
+		handler500(w)
+		return
+	}
+
+	w.WriteStatusLine(200)
+	h := response.GetDefaultHeaders(0)
+	h.Override("Content-Type", "video/mp4")
+	h.Remove("Content-Length")
+	w.WriteHeaders(h)
+
+	w.WriteBody(data)
 
 }
