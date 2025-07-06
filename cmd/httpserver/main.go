@@ -54,24 +54,25 @@ func ResponseHandler(w *response.Writer, req *request.Request) {
 		return
 	}
 
-	handler200(w)
+	if req.RequestLine.RequestTarget == "/" {
+		fmt.Println("Index page")
+		handler200(w, "static/index.html")
+		return
+	}
+
 }
 
-func handler200(w *response.Writer) {
+func handler200(w *response.Writer, file string) {
 	err := w.WriteStatusLine(200)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	body := []byte(`<html>
-<head>
-	<title>200 OK</title>
-</head>
-<body>
-	<h1>Success!</h1>
-	<p>Your request was an absolute banger.</p>
-</body>
-</html>`)
+	body, err := os.ReadFile(file)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	headers := response.GetDefaultHeaders(len(body))
 	headers.Set("Content-Type", "text/html")
 	err = w.WriteHeaders(headers)
