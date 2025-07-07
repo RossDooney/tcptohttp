@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"httpTest/internal/headers"
 	"httpTest/internal/request"
@@ -18,15 +19,18 @@ import (
 	"syscall"
 )
 
-const port = 42069
-
 func main() {
-	server, err := server.Serve(port, ResponseHandler)
+
+	port := flag.Int("port", 8080, "Server port")
+
+	flag.Parse()
+
+	server, err := server.Serve(*port, ResponseHandler)
 	if err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 	defer server.Close()
-	log.Println("Server started on port", port)
+	log.Println("Server started on port", *port)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)

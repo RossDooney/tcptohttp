@@ -141,3 +141,7 @@ func (w *Writer) WriteTrailers(h headers.Headers) error {
 
 	return nil
 }
+
+func (w Writer) WriteFromFile() (int, error) {
+	return 0, nil
+}
